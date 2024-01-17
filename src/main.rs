@@ -3,8 +3,10 @@
 use serde::Deserialize;
 use std::fs::{File, self};
 use std::path::{Path, PathBuf};
-use std::io::prelude::*;
+use std::io::{prelude::*, self};
 use chrono::*;
+use blake2::{Blake2b512, Digest};
+
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -32,6 +34,7 @@ impl SType {
     }
 }
 
+// Loading the config file.
 const CONFIG_FILE: &str = ".\\config.toml";
 fn load_config() -> Config {
     let mut file = File::open(CONFIG_FILE).expect("Unable to open config file!");
@@ -56,6 +59,7 @@ fn sanity_check(config: &Config) -> bool {
     true
 }
 
+// Goes through every subfolder, and checks any of the files is older then the set limit. If they are, then it calls move_file() with them.
 fn check_folder(config: &Config, directory: PathBuf) -> Result<(),  std::io::Error> {
     let time_now = Local::now();
     let time_limit = Duration::days(config.time_limit as i64);
@@ -84,8 +88,11 @@ fn check_folder(config: &Config, directory: PathBuf) -> Result<(),  std::io::Err
     Ok(())
 }
 
+// File moving with checksum checking.
 fn move_file(config: &Config, file: PathBuf, time: DateTime<Local>) -> Result<(),  std::io::Error> {
 
+    // Generating output folder.
+    // [Station_name/year/month/day/] where Station_name is [L+line_number+_+AOI/SPI]
     let station_str = format!("L{}_{}", config.station.line, config.station.name.as_str());
     let output_folder = format!("{}\\{}\\{}\\{}\\{}\\", config.output_dir, station_str ,time.year(), time.month(), time.day());
     println!("\t{output_folder}");
@@ -96,16 +103,31 @@ fn move_file(config: &Config, file: PathBuf, time: DateTime<Local>) -> Result<()
         fs::create_dir_all(&output_path)?;
     }
 
-    output_path.set_file_name(file.file_name().expect("Failed to extract file name!"));
+    // Append filename to the destination directory
+    output_path.push(file.file_name().expect("Failed to extract file name!"));
     println!("\t{:?}", output_path);
 
     // 2 - Calculate checksum
+    let mut hasher = Blake2b512::new();
+    let _n = io::copy(&mut fs::File::open(&file)?, &mut hasher)?;
+    let hash = hasher.finalize();
+    //println!("\t{:?}", hash);
 
     // 3 - Copy file
+    fs::copy(file, &output_path)?;
 
     // 4 - Verify checksum
+    hasher = Blake2b512::new();
+    let _n = io::copy(&mut fs::File::open(&output_path)?, &mut hasher)?;
+    let hash_2 = hasher.finalize();
 
-    // 5 - Remove file
+    if hash == hash_2 {
+        println!("\t\tChecksum is OK!");
+    } else {
+        println!("\t\tChecksum is NOK!");
+    }
+
+    // 5 - Remove original file
     Ok(())
 }
 
