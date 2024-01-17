@@ -5,11 +5,11 @@
 # Mappákat mindig két '\' jellel válaszd el!
 # Example / Példa: "C:\\input\\dir"
 
-input_dir = "C:\\input\\dir"
-output_dir = "D:\\output\\dir"
+input_dir = "D:\\Rust\\_Logs"
+output_dir = "D:\\Rust\\_Out"
 
-# Number of days before files are moved
-# A napok száma, mielőtt átmozgatná a fájlokat
+# Number of days before files are moved. Stored as u8! Max value: 255
+# A napok száma, mielőtt átmozgatná a fájlokat. u8-ként van tárolva! Maximum: 255
 time_limit = 30 
 
 [station]
