@@ -5,12 +5,16 @@
 # Mappákat mindig két '\' jellel válaszd el!
 # Example / Példa: "C:\\input\\dir"
 
-input_dir = "D:\\Rust\\_Logs"
+input_dir = "D:\\Rust\\_In"
 output_dir = "D:\\Rust\\_Out"
 
 # Number of days before files are moved. Stored as u8! Max value: 255
 # A napok száma, mielőtt átmozgatná a fájlokat. u8-ként van tárolva! Maximum: 255
 time_limit = 30 
+
+# If set true, it will not remove the files after copying.
+# Ha "true" akkor másolás után nem törli az eredei fájlokat.
+only_copy = true
 
 [station]
 line = 10 

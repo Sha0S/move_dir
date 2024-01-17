@@ -12,6 +12,7 @@ struct Config {
     input_dir: String,
     output_dir: String,
     time_limit: u8,
+    only_copy: bool,
     station: Station,
 }
 
@@ -134,7 +135,7 @@ fn move_file(config: &Config, file: PathBuf, time: DateTime<Local>) -> Result<()
     //println!("\t{:?}", hash);
 
     // 3 - Copy file
-    fs::copy(file, &output_path)?;
+    fs::copy(&file, &output_path)?;
 
     // 4 - Verify checksum
     hasher = Blake2b512::new();
@@ -142,12 +143,19 @@ fn move_file(config: &Config, file: PathBuf, time: DateTime<Local>) -> Result<()
     let hash_2 = hasher.finalize();
 
     if hash == hash_2 {
-        println!("\t\tChecksum is OK!");
+        // 5 - Remove original file
+        if config.only_copy {
+            println!("\t\tChecksum is OK!");
+        } else {
+            println!("\t\tChecksum is OK! Removing the original file!");
+            fs::remove_file(file)?;
+        }
     } else {
-        println!("\t\tChecksum is NOK!");
+        // Remove duplicate if checksum failed
+        println!("\t\tERROR: checksum is NOK! Removing copied file!");
+        fs::remove_file(output_path)?;
     }
 
-    // 5 - Remove original file
     Ok(())
 }
 
