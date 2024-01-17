@@ -1,0 +1,17 @@
+# This is a TOML document
+
+
+# Always use two '\' signs between folders!
+# Mappákat mindig két '\' jellel válaszd el!
+# Example / Példa: "C:\\input\\dir"
+
+input_dir = "C:\\input\\dir"
+output_dir = "D:\\output\\dir"
+
+# Number of days before files are moved
+# A napok száma, mielőtt átmozgatná a fájlokat
+time_limit = 30 
+
+[station]
+line = 10 
+name = "AOI" # AOI or SPI
