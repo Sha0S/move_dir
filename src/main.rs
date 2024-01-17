@@ -1,35 +1,37 @@
 #![allow(clippy::upper_case_acronyms)]
 
-use serde::Deserialize;
-use std::fs::{File, self};
-use std::path::{Path, PathBuf};
-use std::io::{prelude::*, self};
-use chrono::*;
 use blake2::{Blake2b512, Digest};
-
+use chrono::*;
+use serde::Deserialize;
+use std::fs::{self, File};
+use std::io::{self, prelude::*};
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
 struct Config {
     input_dir: String,
     output_dir: String,
     time_limit: u8,
-    station: Station
+    station: Station,
 }
 
 #[derive(Debug, Deserialize)]
 struct Station {
     line: u8,
-    name: SType
+    name: SType,
 }
 
 #[derive(Debug, Deserialize)]
-enum SType { SPI, AOI}
+enum SType {
+    SPI,
+    AOI,
+}
 
 impl SType {
     fn as_str(&self) -> String {
         match self {
             SType::SPI => "SPI".to_string(),
-            SType::AOI => "AOI".to_string()
+            SType::AOI => "AOI".to_string(),
         }
     }
 }
@@ -39,12 +41,13 @@ const CONFIG_FILE: &str = ".\\config.toml";
 fn load_config() -> Config {
     let mut file = File::open(CONFIG_FILE).expect("Unable to open config file!");
     let mut contents = String::new();
-    file.read_to_string(&mut contents).expect("Failed to read config file!");
+    file.read_to_string(&mut contents)
+        .expect("Failed to read config file!");
 
     println!("{}", contents);
 
-
-    let config: Config = toml::from_str(contents.as_str()).expect("Failed to parse TOML config file!");
+    let config: Config =
+        toml::from_str(contents.as_str()).expect("Failed to parse TOML config file!");
 
     println!("{:?}", config);
 
@@ -53,14 +56,22 @@ fn load_config() -> Config {
 
 // Checking if the folders exist
 fn sanity_check(config: &Config) -> bool {
-    assert!(Path::new(&config.input_dir).exists(), "Input path \"{}\" does NOT exist!", config.input_dir);
-    assert!(Path::new(&config.output_dir).exists(), "Output path \"{}\" does NOT exist!", config.output_dir);
+    assert!(
+        Path::new(&config.input_dir).exists(),
+        "Input path \"{}\" does NOT exist!",
+        config.input_dir
+    );
+    assert!(
+        Path::new(&config.output_dir).exists(),
+        "Output path \"{}\" does NOT exist!",
+        config.output_dir
+    );
 
     true
 }
 
 // Goes through every subfolder, and checks any of the files is older then the set limit. If they are, then it calls move_file() with them.
-fn check_folder(config: &Config, directory: PathBuf) -> Result<(),  std::io::Error> {
+fn check_folder(config: &Config, directory: PathBuf) -> Result<(), std::io::Error> {
     let time_now = Local::now();
     let time_limit = Duration::days(config.time_limit as i64);
 
@@ -73,7 +84,10 @@ fn check_folder(config: &Config, directory: PathBuf) -> Result<(),  std::io::Err
             match path.metadata() {
                 Err(err) => panic!("Could not get file metadata! {err}"),
                 Ok(meta) => {
-                    let modification_time: DateTime<Local> = meta.modified().expect("Could not read modification date!").into();
+                    let modification_time: DateTime<Local> = meta
+                        .modified()
+                        .expect("Could not read modification date!")
+                        .into();
                     let time_difference = time_now - modification_time;
 
                     if time_difference > time_limit {
@@ -89,12 +103,18 @@ fn check_folder(config: &Config, directory: PathBuf) -> Result<(),  std::io::Err
 }
 
 // File moving with checksum checking.
-fn move_file(config: &Config, file: PathBuf, time: DateTime<Local>) -> Result<(),  std::io::Error> {
-
+fn move_file(config: &Config, file: PathBuf, time: DateTime<Local>) -> Result<(), std::io::Error> {
     // Generating output folder.
     // [Station_name/year/month/day/] where Station_name is [L+line_number+_+AOI/SPI]
     let station_str = format!("L{}_{}", config.station.line, config.station.name.as_str());
-    let output_folder = format!("{}\\{}\\{}\\{}\\{}\\", config.output_dir, station_str ,time.year(), time.month(), time.day());
+    let output_folder = format!(
+        "{}\\{}\\{}\\{}\\{}\\",
+        config.output_dir,
+        station_str,
+        time.year(),
+        time.month(),
+        time.day()
+    );
     println!("\t{output_folder}");
 
     // 1 - Check if destination directory exists, if not, then create it.
@@ -131,7 +151,7 @@ fn move_file(config: &Config, file: PathBuf, time: DateTime<Local>) -> Result<()
     Ok(())
 }
 
-fn main() -> Result<(),  std::io::Error> {
+fn main() -> Result<(), std::io::Error> {
     let config = load_config();
 
     if sanity_check(&config) {
