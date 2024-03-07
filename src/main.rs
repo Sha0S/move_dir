@@ -74,7 +74,7 @@ fn sanity_check(config: &Config) -> bool {
 // Goes through every subfolder, and checks any of the files is older then the set limit. If they are, then it calls move_file() with them.
 fn check_folder(config: &Config, directory: PathBuf) -> Result<(), std::io::Error> {
     let time_now = Local::now();
-    let time_limit = Duration::days(config.time_limit as i64);
+    let time_limit = Duration::try_days(config.time_limit as i64).unwrap();
 
     for entry in fs::read_dir(directory)? {
         let entry = entry?;

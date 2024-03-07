@@ -1,5 +1,5 @@
 [package]
-name = "aoi_space_manager"
+name = "move_dir"
 version = "0.1.0"
 edition = "2021"
 
